@@ -103,11 +103,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-SLACK_CLIENT_ID = "67527204885.379601612102"
-SLACK_CLIENT_SECRET = "77fd0110a1a679e021de1ac66b880d72"
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -126,3 +121,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Slack Config
+
+SLACK_CHANNEL = "bot-test"
