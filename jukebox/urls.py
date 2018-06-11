@@ -5,6 +5,6 @@ from . import views
 app_name = 'links'
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
-    path('links/<int:pk>/', views.DetailView.as_view(), name='detail'),
-    path('vote/', views.vote, name='vote'),
+    path('vote/', views.VoteView.as_view(), name='vote'),
+    path('votes/', views.vote, name='votes'),
 ]

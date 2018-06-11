@@ -1,6 +1,6 @@
-import time
 import re
 import os
+import requests
 
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -16,7 +16,7 @@ from .models import Link
 class IndexView(generic.ListView):
 
     template_name = 'index.html'
-    context_object_name = 'urls_list'
+    context_object_name = 'video_details'
 
     def initiate_slack(self):
         """ Initiate the slack method and returns the object"""
@@ -46,38 +46,55 @@ class IndexView(generic.ListView):
                 youtube_urls = re.findall(url_regex, message['text'])
                 if youtube_urls:
                     for url in youtube_urls:
-                        urls_arr.append(''.join(url))
-            
+                        r = requests.get('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=%s&key=AIzaSyDUVSKQZmpMGgep4uHTLVxp_67HfWDBCus' %url[4])
+                        response = r.json()
+                        name = response['items'][0]['snippet']['title']
+                        urls_arr.append({ 'url' : ''.join(url), 'video_id': url[4], 'name' : name })
+                        
         return urls_arr
     
     def add_urls_to_database(self, url_array):
         """ Add the url array to database """
         urls_obj_arr = []
-        for url in url_array:
-            urls_obj_arr.append(Link.objects.get_or_create(url=url))
+        for obj in url_array:
+            urls_obj_arr.append(Link.objects.get_or_create(url=obj['url'], name=obj['name'], video_id=obj['video_id']))
         return urls_obj_arr
 
     def get_queryset(self):
-        """Return the links ordered by votes."""
+        """Return the links ordered by votes and the playlist URL."""
         sc           = self.initiate_slack()
         channel_name = getattr(settings, 'SLACK_CHANNEL', None)
         channel_id   = self.get_channel_id(sc, channel_name)
         youtube_urls = self.find_youtube_links(sc, channel_id)
         urls_obj     = self.add_urls_to_database(youtube_urls)
+        yt_urls      = Link.objects.order_by('-votes')
+        yt_link_arr  = []
+        for i in range(1,len(yt_urls)):
+            yt_link_arr.append(yt_urls[i].video_id)
+        playlist    = 'https://www.youtube.com/embed/%s?playlist=%s' %(yt_urls[0].video_id, ','.join(yt_link_arr))
+        return { 'urls_list' : yt_urls, 'playlist' : playlist }
+
+class VoteView(generic.ListView):
+
+    template_name = 'votes/votes.html'
+    context_object_name = 'urls_list'
+
+    def get_queryset(self):
+        """Return the links ordered by votes."""
+        indexObj     = IndexView()
+        sc           = indexObj.initiate_slack()
+        channel_name = getattr(settings, 'SLACK_CHANNEL', None)
+        channel_id   = indexObj.get_channel_id(sc, channel_name)
+        youtube_urls = indexObj.find_youtube_links(sc, channel_id)
+        indexObj.add_urls_to_database(youtube_urls)
         return Link.objects.order_by('-votes')
 
-class DetailView(generic.DetailView):
-    model = Link
-    template_name = 'links/detail.html'
-
-class ConfigureView(generic.DetailView):
-    model = Link
-    template_name = 'links/configure.html'
 
 def vote(request):
     urls_list = Link.objects.all()
+    voted_id  = request.POST['urls']
     try:
-        selected_url = urls_list.get(pk=request.POST['urls'])
+        selected_url = urls_list.get(pk=voted_id)
     except (KeyError, Link.DoesNotExist):
         messages.warning(request, 'Please choose any option')
         return HttpResponseRedirect(reverse('links:index'))

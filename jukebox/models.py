@@ -4,7 +4,9 @@ from django.db import models
 from django.utils import timezone
 
 class Link(models.Model):
-    url          = models.CharField(max_length=200)
+    name         = models.CharField(max_length=511)
+    url          = models.CharField(max_length=200, unique=True)
+    video_id     = models.CharField(max_length=15, unique=True)
     votes        = models.IntegerField(default=0)
     publish_date = models.DateTimeField('date added', auto_now_add=True)
 

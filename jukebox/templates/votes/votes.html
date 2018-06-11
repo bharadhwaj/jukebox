@@ -1,0 +1,21 @@
+{% if urls_list %}
+    <h1>Jukebox</h1>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form action="{% url 'links:votes' %}" method="post">
+        {% csrf_token %}
+        {% for url in urls_list %}
+            <input type="radio" name="urls" id="url{{ forloop.counter }}" value="{{ url.id }}" />
+            <label for="choice{{ forloop.counter }}"><a href="{{ url.url }}" target="_blank">{{ url.name }}</a></label> -- {{ url.votes }}
+            <br />
+        {% endfor %}
+        <input type="submit" value="Vote" />
+    </form>
+{% else %}
+    <p>No links available.</p>
+{% endif %}
