@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     path('vote/', views.VoteView.as_view(), name='vote'),
     path('votes/', views.vote, name='votes'),
+    path('result/', views.ResultView.as_view(), name='result'),
 ]

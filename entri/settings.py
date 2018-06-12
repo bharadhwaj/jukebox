@@ -125,3 +125,8 @@ STATIC_URL = '/static/'
 # Slack Config
 
 SLACK_CHANNEL = "bot-test"
+
+
+# Google API Key Config
+
+API_KEY = "AIzaSyDUVSKQZmpMGgep4uHTLVxp_67HfWDBCus"

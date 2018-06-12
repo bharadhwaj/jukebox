@@ -38,6 +38,7 @@ class IndexView(generic.ListView):
         url_regex = (r'((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?>')
         time_to   = datetime.now().timestamp()
         time_from = time_to - 604800
+        key       = getattr(settings, 'API_KEY', None)
         urls_arr  = []
 
         history   = sc.api_call('channels.history', channel=channel, oldest=time_from, latest=time_to)
@@ -46,7 +47,7 @@ class IndexView(generic.ListView):
                 youtube_urls = re.findall(url_regex, message['text'])
                 if youtube_urls:
                     for url in youtube_urls:
-                        r = requests.get('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=%s&key=AIzaSyDUVSKQZmpMGgep4uHTLVxp_67HfWDBCus' %url[4])
+                        r = requests.get('https://www.googleapis.com/youtube/v3/videos?part=snippet&id=%s&key=%s' %(url[4], key))
                         response = r.json()
                         name = response['items'][0]['snippet']['title']
                         urls_arr.append({ 'url' : ''.join(url), 'video_id': url[4], 'name' : name })
@@ -80,6 +81,21 @@ class VoteView(generic.ListView):
     context_object_name = 'urls_list'
 
     def get_queryset(self):
+        """Return the links ordered by id."""
+        indexObj     = IndexView()
+        sc           = indexObj.initiate_slack()
+        channel_name = getattr(settings, 'SLACK_CHANNEL', None)
+        channel_id   = indexObj.get_channel_id(sc, channel_name)
+        youtube_urls = indexObj.find_youtube_links(sc, channel_id)
+        indexObj.add_urls_to_database(youtube_urls)
+        return Link.objects.order_by('id')
+
+class ResultView(generic.ListView):
+
+    template_name = 'votes/result.html'
+    context_object_name = 'urls_list'
+
+    def get_queryset(self):
         """Return the links ordered by votes."""
         indexObj     = IndexView()
         sc           = indexObj.initiate_slack()
@@ -92,14 +108,15 @@ class VoteView(generic.ListView):
 
 def vote(request):
     urls_list = Link.objects.all()
-    voted_id  = request.POST['urls']
     try:
+        voted_id     = request.POST['urls']
         selected_url = urls_list.get(pk=voted_id)
     except (KeyError, Link.DoesNotExist):
-        messages.warning(request, 'Please choose any option')
-        return HttpResponseRedirect(reverse('links:index'))
+        messages.warning(request, 'Please choose any album and then submit.')
+        return HttpResponseRedirect(reverse('links:vote'))
 
     else:
         selected_url.votes += 1
         selected_url.save()
-        return HttpResponseRedirect(reverse('links:index'))
+        messages.success(request, 'Your have voted for ' + selected_url.name + '.')
+        return HttpResponseRedirect(reverse('links:result'))
