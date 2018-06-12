@@ -34,6 +34,7 @@ $ pip install -r requirements.txt
 ```
 
 3. Configure the Database
+
  Inside the file `entri/settings.py`, configure the below things,
 ```python
 ...
@@ -50,6 +51,7 @@ DATABASES = {
 ````
 
 4. Configure the Slack Legacy Token
+
   Obtain **Slack Legacy Token** for a specific slack channel from [here](https://api.slack.com/custom-integrations/legacy-tokens)
 After generating the Slack Legacy Token, add it as environment variable `SLACK_TOKEN`,
 ```sh
@@ -57,6 +59,7 @@ $ export SLACK_TOKEN='xoxp-....
 ```
 
 5. Configure the Channel Name
+
  Inside `entri/settings.py`, edit the following line to your required channel name,
 ```py
 ...
@@ -65,13 +68,15 @@ SLACK_CHANNEL = "<Slack-Channel-Name>"
 ```
 
 6. Create the Database Migration 
+
  From the root directory of the repo, enter,
 ```sh
 $ python manage.py migrate
 ```
 Now the database is setup if you have configured correctly.
 
-7. Run the server.
+7. Run the server
+
  ```sh
 $ python manage.py runserver 0:8080
 ```
