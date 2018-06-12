@@ -87,9 +87,9 @@ Jukebox app has the following views.
 
 | Route | Description |
 | ------ | ------ |
-| / | Display the playlist of albums that have been added. |
-| /vote/ | To vote for any album |
-| /result/ | To see the result of the polls |
+| `/` | Display the playlist of albums that have been added. |
+| `/vote/` | To vote for any album |
+| `/result/` | To see the result of the polls |
 
 License
 ----
